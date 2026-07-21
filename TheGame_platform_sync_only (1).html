@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RNG - Ultimate 25 Tier Edition</title>
+    <script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000; 
+            color: #e2e4e9;
+            font-family: sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            overflow: hidden;
+            box-sizing: border-box;
+            position: relative;
+            transition: background-color 0.4s ease;
+        }
+
+        #themeBgEffect {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            box-sizing: border-box;
+            z-index: 10;
+            flex-wrap: wrap;
+        }
+
+        .inv-btn { padding: 10px 20px; font-size: 0.9rem; font-weight: bold; background: #e74c3c; border: none; color: #fff; border-radius: 4px; cursor: pointer; }
+        .auto-btn { padding: 10px 20px; font-size: 0.9rem; font-weight: bold; background: #34495e; border: none; color: #fff; border-radius: 4px; cursor: pointer; }
+        .promo-btn { padding: 10px 20px; font-size: 0.9rem; font-weight: bold; background: #9b59b6; border: none; color: #fff; border-radius: 4px; cursor: pointer; }
+        .trade-btn { padding: 10px 20px; font-size: 0.9rem; font-weight: bold; background: #2980b9; border: none; color: #fff; border-radius: 4px; cursor: pointer; }
+
+        .center-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: auto;
+            margin-bottom: auto;
+            z-index: 5;
+        }
+
+        .pet-slot {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+        }
+
+        .slot-box {
+            width: 260px;
+            height: 140px;
+            background: rgba(0, 0, 0, 0.9); 
+            border: 2px solid #222;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        .slot-text { font-size: 1.8rem; font-weight: bold; text-align: center; }
+        .slot-rate { font-size: 0.85rem; color: #666; margin-top: 8px; }
+
+        .bottom-area {
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .counter { font-size: 0.9rem; color: #444; letter-spacing: 1px; }
+        .btn-group { display: flex; gap: 10px; }
+
+        .roll-normal-btn { padding: 12px 30px; font-size: 1.1rem; font-weight: bold; background: #f1c40f; color: #000; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s ease; }
+        .autoroll-btn { padding: 12px 20px; font-size: 1.1rem; font-weight: bold; background: #2ecc71; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        .autoroll-btn.locked { background: #222; color: #666; }
+        .autoroll-btn.active { background: #e74c3c; }
+        .roll-normal-btn:disabled, .autoroll-btn:disabled { background: #111; color: #444; cursor: not-allowed; opacity: 0.6; }
+
+        /* Paneller */
+        .full-screen-panel {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000000; 
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .panel-header { padding: 20px; border-bottom: 1px solid #111; display: flex; justify-content: space-between; align-items: center; }
+        .panel-title { font-size: 1.2rem; font-weight: bold; color: #fff; }
+        .close-btn { background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; }
+
+        .inv-grid { flex: 1; padding: 20px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; align-content: start; }
+        
+        .inv-card {
+            background: #050505; 
+            border: 1px solid #222;
+            border-radius: 4px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 75px;
+            box-sizing: border-box;
+            cursor: pointer;
+            position: relative;
+        }
+        .inv-card.equipped-item { border-color: #2ecc71 !important; background: #031408; }
+        .inv-card.equipped-item::before { content: "👑"; position: absolute; top: 2px; left: 5px; font-size: 0.75rem; }
+
+        .item-name { font-size: 0.95rem; font-weight: bold; margin-top: 5px; }
+        .item-rate { font-size: 0.75rem; color: #555; }
+
+        /* Seçim Pop-up Menüsü */
+        .action-popup {
+            position: fixed;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #0a0a0a; border: 1px solid #333; padding: 20px;
+            border-radius: 6px; z-index: 150; display: none;
+            flex-direction: column; gap: 10px; width: 260px; box-sizing: border-box;
+        }
+        .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 140; display: none; }
+        .popup-btn { padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-align: center; font-size: 0.9rem; }
+        .popup-btn.equip { background: #2ecc71; color: #fff; }
+        .popup-btn.delete { background: #e74c3c; color: #fff; }
+        .popup-btn.cancel { background: #333; color: #fff; }
+
+        .auto-list-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .auto-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #050505; border: 1px solid #111; border-radius: 4px; cursor: pointer; }
+        .auto-row-info { display: flex; flex-direction: column; gap: 2px; }
+        .auto-checkbox { width: 18px; height: 18px; accent-color: #ff3333; cursor: pointer; }
+
+        /* TAKAS (TRADE) SİSTEMİ ARAYÜZÜ */
+        .trade-setup-container { padding: 20px; display: flex; flex-direction: column; gap: 15px; max-width: 400px; margin: 0 auto; width: 100%; box-sizing: border-box; }
+        .trade-input { padding: 12px; background: #111; border: 1px solid #333; color: #fff; border-radius: 4px; font-size: 1rem; }
+        .trade-status-msg { font-size: 0.9rem; color: #f1c40f; text-align: center; line-height: 1.4; }
+        
+        .trade-table-ui { display: none; flex-direction: column; flex: 1; padding: 15px; gap: 15px; box-sizing: border-box; overflow: hidden; }
+        .trade-slots-wrapper { display: flex; gap: 10px; flex: 1; overflow: hidden; }
+        .trade-side-box { flex: 1; background: #050505; border: 2px dashed #222; border-radius: 6px; display: flex; flex-direction: column; padding: 10px; box-sizing: border-box; position: relative; overflow: hidden; }
+        .trade-side-box.ready { border-color: #2ecc71; background: #020f05; }
+        .side-title { font-size: 0.85rem; text-transform: uppercase; color: #666; margin-bottom: 8px; text-align: center; font-weight: bold;}
+        
+        .trade-item-display { flex: 1; display: flex; flex-direction: column; gap: 8px; overflow-y: auto; align-items: center; padding: 5px; }
+        .trade-plus-btn { width: 100%; max-width: 130px; padding: 10px; background: #222; border: 1px solid #333; color: #fff; font-size: 1.1rem; font-weight: bold; border-radius: 4px; cursor: pointer; text-align: center; margin-bottom: 10px; }
+        .trade-plus-btn:hover { background: #333; }
+        
+        /* Takas Kartı Tasarımı */
+        .trade-card-mini {
+            width: 100%;
+            background: #000;
+            border: 1px solid #222;
+            border-radius: 4px;
+            padding: 8px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+            position: relative;
+            text-align: left;
+        }
+        .trade-card-remove-btn {
+            position: absolute;
+            top: 4px; right: 4px;
+            background: none; border: none; color: #e74c3c;
+            font-size: 0.85rem; cursor: pointer; font-weight: bold;
+        }
+
+        .trade-action-bar { display: flex; flex-direction: column; gap: 10px; align-items: center; padding: 10px 0; }
+        .accept-btn { width: 100%; padding: 15px; background: #2ecc71; border: none; color: #fff; font-size: 1.1rem; font-weight: bold; border-radius: 4px; cursor: pointer; }
+        .accept-btn:disabled { background: #111; color: #444; cursor: not-allowed; }
+        .accept-btn.accepted { background: #e67e22; }
+
+        /* Animasyonlar */
+        .spinning { animation: slotBlur 0.06s infinite linear; }
+        @keyframes slotBlur {
+            0% { transform: translateY(-4px); opacity: 0.5; }
+            100% { transform: translateY(4px); opacity: 0.5; }
+        }
+
+        @keyframes petFloat {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating-pet { animation: petFloat 2s infinite ease-in-out; }
+
+        @keyframes spinAround { 100% { transform: rotate(360deg); } }
+        .spinning-pet { animation: spinAround 4s infinite linear; }
+
+        .matrix-bg { background: linear-gradient(rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.92)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><text x="10" y="20" fill="%230f0" font-family="monospace" font-size="10">1010110</text><text x="50" y="60" fill="%230f0" font-family="monospace" font-size="12">0110</text></svg>'); background-size: 100px 100px; }
+        .solar-sun { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 240px; height: 240px; background: radial-gradient(circle, #f1c40f 0%, #e67e22 50%, transparent 70%); filter: blur(15px); opacity: 0.5; }
+        .lunar-moon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; background: radial-gradient(circle, #ffffff 0%, #bdc3c7 50%, transparent 70%); opacity: 0.35; }
+        .demon-horns { position: absolute; bottom: 0; width: 100%; height: 50%; background: linear-gradient(to top, rgba(231, 76, 60, 0.15), transparent); display: flex; justify-content: space-between; padding: 0 40px; box-sizing: border-box; }
+        .demon-horns::before, .demon-horns::after { content: "😈"; font-size: 7rem; opacity: 0.12; filter: blur(1px); }
+        .toilet-slipper-aura { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10rem; opacity: 0.08; filter: blur(2px); animation: petFloat 3s infinite ease-in-out; }
+    </style>
+</head>
+<body>
+
+    <div id="themeBgEffect"></div>
+
+    <div class="top-bar">
+        <button class="inv-btn" onclick="openPanel('invScreen')">Inventory 🎒</button>
+        <button class="auto-btn" onclick="openPanel('autoScreen')">Auto Delete ⚙️</button>
+        <button class="promo-btn" onclick="openPromoCodeMenu()">Redeem Code 🎫</button>
+        <button class="trade-btn" onclick="openPanel('tradeScreen')">Trade 🤝</button>
+    </div>
+
+    <div class="center-container">
+        <div class="pet-slot" id="petStation"></div>
+        <div class="slot-box" id="slotBox">
+            <div class="slot-text" id="slotText" style="color: #555;">READY</div>
+            <div class="slot-rate" id="slotRate">1/-</div>
+        </div>
+    </div>
+
+    <div class="bottom-area">
+        <div class="counter" id="counter">0/10</div>
+        <div class="btn-group">
+            <button class="roll-normal-btn" id="rollBtn" onclick="roll()">ROLL</button>
+            <button class="autoroll-btn locked" id="autoRollBtn" onclick="handleAutoRollClick()">🔒 AUTO ROLL</button>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="popupOverlay" onclick="closeActionPopup()"></div>
+    <div class="action-popup" id="actionPopup">
+        <div style="text-align: center; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;" id="popupItemTitle">-</div>
+        <button class="popup-btn equip" id="popupEquipBtn">KUŞAN (EQUIP)</button>
+        <button class="popup-btn delete" id="popupDeleteBtn">SİL (DELETE)</button>
+        <button class="popup-btn cancel" onclick="closeActionPopup()">İPTAL</button>
+    </div>
+
+    <div class="full-screen-panel" id="invScreen">
+        <div class="panel-header">
+            <div class="panel-title">Inventory</div>
+            <button class="close-btn" onclick="closePanel('invScreen')">✕</button>
+        </div>
+        <div class="inv-grid" id="invGrid"></div>
+    </div>
+
+    <div class="full-screen-panel" id="autoScreen">
+        <div class="panel-header">
+            <div class="panel-title">Auto Delete Settings</div>
+            <button class="close-btn" onclick="closePanel('autoScreen')">✕</button>
+        </div>
+        <div class="auto-list-container" id="autoListGrid"></div>
+    </div>
+
+    <div class="full-screen-panel" id="tradeScreen">
+        <div class="panel-header">
+            <div class="panel-title">Online Takas Masası 🤝</div>
+            <button class="close-btn" onclick="closeTradePanel()">✕</button>
+        </div>
+        
+        <div id="tradeSetup" class="trade-setup-container">
+            <button class="roll-normal-btn" style="background:#2980b9; color:#fff;" onclick="generateTradeRoom()">Masa Kodu Kopyala</button>
+            <div id="tradeStatus" class="trade-status-msg">Henüz bir masada değilsiniz. Kod üreterek veya arkadaşınızın kodunu girerek başlayın.</div>
+            <input type="text" id="partnerCodeInput" class="trade-input" placeholder="Arkadaşının Masa Kodunu Yapıştır">
+            <button class="autoroll-btn" style="width:100%;" onclick="connectToTradeRoom()">Masaya Bağlan!</button>
+        </div>
+
+        <div id="tradeTable" class="trade-table-ui">
+            <div class="trade-slots-wrapper">
+                <div class="trade-side-box" id="mySideBox">
+                    <div class="side-title">Senin Teklifin</div>
+                    <button class="trade-plus-btn" onclick="openTradeItemSelector()">+ Ekle</button>
+                    <div class="trade-item-display" id="myOfferedItemZone"></div>
+                </div>
+                <div class="trade-side-box" id="peerSideBox">
+                    <div class="side-title">Karşı Tarafın Teklifi</div>
+                    <div style="height:38px;"></div> <div class="trade-item-display" id="peerOfferedItemZone"></div>
+                </div>
+            </div>
+            <div class="trade-action-bar">
+                <button class="accept-btn" id="tradeAcceptBtn" onclick="clickAcceptTrade()" disabled>ACCEPT (ONAYLA)</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="full-screen-panel" id="tradeItemSelectScreen" style="z-index: 200;">
+        <div class="panel-header">
+            <div class="panel-title">Masaya Koyulacak Eşyayı Seç</div>
+            <button class="close-btn" onclick="closePanel('tradeItemSelectScreen')">✕</button>
+        </div>
+        <div class="inv-grid" id="tradeSelectGrid"></div>
+    </div>
+
+    <script>
+        const itemsPool = [
+            { name: "Common", rate: 2, text: "#888888" },
+            { name: "Uncommon", rate: 4, text: "#2ecc71" },
+            { name: "Rare", rate: 8, text: "#3498db" },
+            { name: "Epic", rate: 16, text: "#9b59b6" },
+            { name: "Legendary", rate: 32, text: "#f1c40f" },
+            { name: "Mythic", rate: 64, text: "#e74c3c" },
+            { name: "Void", rate: 128, text: "#8e44ad" },
+            { name: "Cosmic", rate: 256, text: "#00ffff" },
+            { name: "Solar", rate: 512, text: "#e67e22" },
+            { name: "Lunar", rate: 1024, text: "#5dade2" },
+            { name: "Nebula", rate: 2048, text: "#a569bd" },
+            { name: "Galaxy", rate: 4096, text: "#2980b9" },
+            { name: "Supernova", rate: 8192, text: "#e74c3c" },
+            { name: "Quasar", rate: 16384, text: "#9b59b6" },
+            { name: "Black Hole", rate: 32768, text: "#553377" },
+            { name: "Angel", rate: 65536, text: "#ffffff" },
+            { name: "Demon", rate: 131072, text: "#ff0000" },
+            { name: "Divine", rate: 262144, text: "#eeeeee" },
+            { name: "Eternal", rate: 524288, text: "#f39c12" },
+            { name: "Infinity", rate: 1048576, text: "#ffffff" },
+            { name: "Omega", rate: 2097152, text: "#ff3333" },
+            { name: "Reality", rate: 4194304, text: "#bdc3c7" },
+            { name: "Dream", rate: 8388608, text: "#ffb6c1" },
+            { name: "Void King", rate: 16777216, text: "#9b59b6" },
+            { name: "TRUE GOD", rate: 33554432, text: "#ff00ff" }
+        ];
+
+        let rollCount = 0;
+        let isAutoRolling = false;
+        let currentSpinTimeout = null;
+        
+        let inventory = JSON.parse(localStorage.getItem('rng_game_inventory')) || [];
+        let autoDeleteFilters = JSON.parse(localStorage.getItem('rng_auto_delete_filters')) || {};
+        let equippedItemName = localStorage.getItem('rng_equipped_item') || "Common";
+        let usedPromoCodes = JSON.parse(localStorage.getItem('rng_used_promos')) || [];
+        
+        let isAutoRollUnlocked = checkKeyExist();
+        
+        // ONLINE TAKAS DEĞİŞKENLERİ
+        let peer = null;
+        let conn = null;
+        let myOffers = [];       // Masaya koyduğum eşyaların listesi (Çoklu Eşya)
+        let peerOffers = [];     // Karşı tarafın koyduğu eşyaların listesi
+        let myAccepted = false;
+        let peerAccepted = false;
+        let isTradeSuccess = false; // Güvenli kapanış kontrolü
+
+        const BASE_ROOM_ID = "Tradetableforbasicrngsimulatorgame";
+
+        // ================= PLATFORM: REBORN PROFİL SENKRONİZASYONU =================
+        // Oyunun mevcut sistemlerine dokunmaz; yalnızca profil için verileri üst pencereye yollar.
+        function getPlatformRngStats() {
+            const normalItems = inventory.filter(item => item && item.name !== "Key");
+            const counts = {};
+
+            normalItems.forEach(item => {
+                counts[item.name] = (counts[item.name] || 0) + 1;
+            });
+
+            let highestItem = null;
+            normalItems.forEach(item => {
+                if (!highestItem || Number(item.rate || 0) > Number(highestItem.rate || 0)) {
+                    highestItem = {
+                        name: item.name,
+                        rate: Number(item.rate || 0),
+                        text: item.text || "#ffffff"
+                    };
+                }
+            });
+
+            const selectedPoolItem = itemsPool.find(item => item.name === equippedItemName);
+            const selectedItem = {
+                name: equippedItemName,
+                rate: Number(selectedPoolItem?.rate || 0),
+                text: selectedPoolItem?.text || "#ffffff"
+            };
+
+            return {
+                selectedItem,
+                selectedTheme: {
+                    name: selectedItem.name,
+                    color: selectedItem.text
+                },
+                inventory: normalItems.map(item => ({
+                    name: item.name,
+                    rate: Number(item.rate || 0),
+                    text: item.text || "#ffffff",
+                    id: item.id || ""
+                })),
+                inventoryCounts: counts,
+                totalItems: normalItems.length,
+                uniqueItems: Object.keys(counts).length,
+                highestItem
+            };
+        }
+
+        function syncPlatformRngProfile() {
+            const stats = getPlatformRngStats();
+
+            // Platform iframe içinde çalışıyorsa ana platforma gönder.
+            if (window.parent && window.parent !== window) {
+                window.parent.postMessage({
+                    type: "PLATFORM_STATS",
+                    game: "rng",
+                    stats
+                }, "*");
+
+                // Eski/yeni platform sürümleriyle uyumluluk için ikinci açık mesaj türü.
+                window.parent.postMessage({
+                    type: "PLATFORM_REBORN_RNG_STATS",
+                    stats
+                }, "*");
+            }
+
+            // Aynı alan adında doğrudan okunabilmesi için yerel yedek.
+            try {
+                localStorage.setItem("platform_reborn_rng_stats", JSON.stringify(stats));
+            } catch (error) {
+                console.warn("Platform profil yedeği kaydedilemedi:", error);
+            }
+        }
+        // ==========================================================================
+
+
+        updateAutoRollButtonUI();
+        applyEquippedTheme(equippedItemName);
+        syncPlatformRngProfile();
+
+        function checkKeyExist() { return inventory.some(item => item.name === "Key"); }
+
+        function updateAutoRollButtonUI() {
+            const autoBtn = document.getElementById('autoRollBtn');
+            if (!autoBtn) return;
+            if (isAutoRollUnlocked) {
+                autoBtn.classList.remove('locked');
+                autoBtn.innerText = isAutoRolling ? "STOP ROLL" : "AUTO ROLL";
+                if (isAutoRolling) autoBtn.classList.add('active'); else autoBtn.classList.remove('active');
+            } else {
+                autoBtn.classList.add('locked');
+                autoBtn.innerText = "🔒 AUTO ROLL";
+                autoBtn.classList.remove('active');
+            }
+        }
+
+        function handleAutoRollClick() {
+            if (!isAutoRollUnlocked) {
+                const passwordAttempt = prompt("Auto Roll özelliğini açmak için gizli şifreyi girin:");
+                if (passwordAttempt === "İmAgay7812") {
+                    alert("Kilit Açıldı! Envanterinize metalik sarı bir 'Key' eklendi.");
+                    isAutoRollUnlocked = true;
+                    inventory.push({ name: "Key", rate: 1, text: "#d4af37", id: "KEY_" + Date.now() });
+                    localStorage.setItem('rng_game_inventory', JSON.stringify(inventory));
+                    syncPlatformRngProfile();
+                    updateAutoRollButtonUI();
+                } else if (passwordAttempt !== null) { alert("Yanlış Şifre!"); }
+            } else { toggleAutoRoll(); }
+        }
+
+        function openPanel(id) {
+            document.getElementById(id).style.display = 'flex';
+            if (id === 'invScreen') { renderInventory(); }
+            else if (id === 'autoScreen') { renderAutoDeleteList(); }
+        }
+
+        function closePanel(id) { document.getElementById(id).style.display = 'none'; }
+
+        function handleInventoryCardClick(id, name) {
+            document.getElementById('popupItemTitle').innerText = name;
+            const targetColor = (itemsPool.find(i => i.name === name) || {text:"#fff"}).text;
+            document.getElementById('popupItemTitle').style.color = targetColor;
+            
+            document.getElementById('popupEquipBtn').onclick = function() { executeEquip(name); };
+            document.getElementById('popupDeleteBtn').onclick = function() { executeDelete(id, name); };
+            
+            document.getElementById('actionPopup').style.display = 'flex';
+            document.getElementById('popupOverlay').style.display = 'block';
+        }
+
+        function closeActionPopup() {
+            document.getElementById('actionPopup').style.display = 'none';
+            document.getElementById('popupOverlay').style.display = 'none';
+        }
+
+        function executeEquip(name) {
+            equippedItemName = name;
+            localStorage.setItem('rng_equipped_item', name);
+            applyEquippedTheme(name);
+            syncPlatformRngProfile();
+            renderInventory();
+            closeActionPopup();
+        }
+
+        function executeDelete(id, name) {
+            if (confirm(`"${name}" eşyasını silmek istiyor musunuz?`)) {
+                inventory = inventory.filter(item => item.id !== id);
+                localStorage.setItem('rng_game_inventory', JSON.stringify(inventory));
+                if (equippedItemName === name) { executeEquip("Common"); }
+                syncPlatformRngProfile();
+                isAutoRollUnlocked = checkKeyExist();
+                updateAutoRollButtonUI();
+                renderInventory();
+                closeActionPopup();
+            }
+        }
+
+        function openPromoCodeMenu() {
+            const code = prompt("Lütfen kullanmak istediğiniz Takas (Trade) Kodunu girin:");
+            if (!code) return;
+            const cleanedCode = code.trim();
+
+            if (usedPromoCodes.includes(cleanedCode)) { alert("Bu takas kodunu daha önce zaten kullandınız! ❌"); return; }
+            let payload = null;
+            try {
+                const decodedString = decodeURIComponent(escape(atob(cleanedCode)));
+                payload = JSON.parse(decodedString);
+            } catch (e1) {
+                try {
+                    payload = JSON.parse(atob(cleanedCode));
+                } catch (e2) {
+                    alert("Geçersiz veya bozuk bir kod girdiniz!");
+                    return;
+                }
+            }
+            if (!payload || (!payload.tradeId && !payload.packId) || !Array.isArray(payload.items)) { 
+                alert("HATA: Kod formatı uyumsuz!"); return; 
+            }
+            let summaryText = payload.items.map(i => `${i.name}`).join("\n");
+            if (!confirm(`Şu eşyalar yükleniyor:\n\n${summaryText}\n\nOnaylıyor musunuz?`)) return;
+
+            payload.items.forEach(item => { 
+                inventory.push({ name: item.name, rate: item.rate, text: item.text, id: "TRADE_ITEM_" + Date.now() + "_" + Math.random() }); 
+            });
+            usedPromoCodes.push(cleanedCode);
+            localStorage.setItem('rng_game_inventory', JSON.stringify(inventory));
+            localStorage.setItem('rng_used_promos', JSON.stringify(usedPromoCodes));
+            syncPlatformRngProfile();
+            isAutoRollUnlocked = checkKeyExist(); updateAutoRollButtonUI();
+            alert("Eşyalar envanterinizde!");
+        }
+
+        // ================= ONLINE TAKAS SİSTEMİ MOTORU =================
+
+        function initPeer(customSubId, isHost) {
+            if(peer) peer.destroy();
+            isTradeSuccess = false;
+            const fullRoomId = BASE_ROOM_ID + "_" + customSubId;
+            
+            if(isHost) { peer = new Peer(fullRoomId); } else { peer = new Peer(); }
+
+            peer.on('open', (id) => {
+                if(isHost) {
+                    navigator.clipboard.writeText(customSubId);
+                    document.getElementById('tradeStatus').innerHTML = `Masa Kodu Kopyalandı: <b style="color:#2ecc71;">${customSubId}</b><br><br>Bu kodu arkadaşına ver, kod girme yerine girsin ve masaya!`;
+                } else {
+                    document.getElementById('tradeStatus').innerText = "Ağa bağlanıldı, odaya giriş yapılıyor...";
+                }
+            });
+
+            peer.on('connection', (connection) => {
+                conn = connection;
+                setupConnectionEvents();
+                launchTradeTable();
+            });
+
+            peer.on('error', (err) => {
+                if (err.type === 'peer-unavailable') {
+                    alert("Girdiğiniz masa kodu bulunamadı! Arkadaşınızın odayı kurduğundan emin olun.");
+                } else {
+                    alert("Bağlantı hatası oluştu: " + err.type);
+                }
+                closeTradePanel();
+            });
+        }
+
+        function generateTradeRoom() {
+            const randomCode = Math.floor(1000 + Math.random() * 9000);
+            initPeer(randomCode, true);
+        }
+
+        function connectToTradeRoom() {
+            const codeInput = document.getElementById('partnerCodeInput').value.trim();
+            if(!codeInput) { alert("Lütfen geçerli bir Masa Kodu girin!"); return; }
+            initPeer(null, false);
+            peer.on('open', () => {
+                const targetFullId = BASE_ROOM_ID + "_" + codeInput;
+                conn = peer.connect(targetFullId);
+                setupConnectionEvents();
+            });
+        }
+
+        function setupConnectionEvents() {
+            conn.on('open', () => { launchTradeTable(); });
+
+            conn.on('data', (data) => {
+                if (data.type === "OFFER") {
+                    peerOffers = data.items || [];
+                    peerAccepted = false; 
+                    myAccepted = false;
+                    renderTradeTableStatus();
+                } else if (data.type === "ACCEPT") {
+                    peerAccepted = true;
+                    renderTradeTableStatus();
+                    checkTradeCompletion();
+                }
+            });
+
+            conn.on('close', () => {
+                if(!isTradeSuccess) {
+                    alert("Arkadaşınız masadan ayrıldı! Takas iptal edildi.");
+                    closeTradePanel();
+                }
+            });
+        }
+
+        function launchTradeTable() {
+            document.getElementById('tradeSetup').style.display = 'none';
+            document.getElementById('tradeTable').style.display = 'flex';
+            myOffers = []; peerOffers = []; myAccepted = false; peerAccepted = false; isTradeSuccess = false;
+            renderTradeTableStatus();
+        }
+
+        function renderTradeTableStatus() {
+            // Benim Alanım (Kart Düzeni)
+            const myZone = document.getElementById('myOfferedItemZone');
+            myZone.innerHTML = "";
+            myOffers.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = "trade-card-mini";
+                card.style.borderColor = item.text;
+                card.innerHTML = `<div style="color:${item.text}; font-weight:bold; font-size:0.9rem;">${item.name}</div>
+                                  <div style="font-size:0.75rem; color:#444;">1/${item.rate.toLocaleString()}</div>
+                                  <button class="trade-card-remove-btn" onclick="removeMyOfferAt(${index})">✕</button>`;
+                myZone.appendChild(card);
+            });
+
+            // Karşı Tarafın Alanı (Kart Düzeni)
+            const peerZone = document.getElementById('peerOfferedItemZone');
+            peerZone.innerHTML = "";
+            if(peerOffers.length === 0) {
+                peerZone.innerHTML = '<div style="color:#333; font-size:0.9rem; margin-top:20px;">Eşya bekleniyor...</div>';
+            } else {
+                peerOffers.forEach(item => {
+                    const card = document.createElement('div');
+                    card.className = "trade-card-mini";
+                    card.style.borderColor = item.text;
+                    card.innerHTML = `<div style="color:${item.text}; font-weight:bold; font-size:0.9rem;">${item.name}</div>
+                                      <div style="font-size:0.75rem; color:#444;">1/${item.rate.toLocaleString()}</div>`;
+                    peerZone.appendChild(card);
+                });
+            }
+
+            // Hazır Efektleri
+            if(myAccepted) document.getElementById('mySideBox').classList.add('ready');
+            else document.getElementById('mySideBox').classList.remove('ready');
+
+            if(peerAccepted) document.getElementById('peerSideBox').classList.add('ready');
+            else document.getElementById('peerSideBox').classList.remove('ready');
+
+            // Buton Aktivasyonu
+            const btn = document.getElementById('tradeAcceptBtn');
+            if(myOffers.length > 0 || peerOffers.length > 0) {
+                btn.disabled = false;
+                if(myAccepted) {
+                    btn.innerText = "BEKLENİYOR..."; btn.classList.add('accepted');
+                } else {
+                    btn.innerText = "ACCEPT (ONAYLA)"; btn.classList.remove('accepted');
+                }
+            } else {
+                btn.disabled = true; btn.innerText = "ACCEPT (ONAYLA)";
+            }
+        }
+
+        function openTradeItemSelector() {
+            document.getElementById('tradeItemSelectScreen').style.display = 'flex';
+            const grid = document.getElementById('tradeSelectGrid');
+            grid.innerHTML = "";
+            
+            // Masada zaten olan eşyaları envanter seçim listesinden gizle (Çift eklemeyi önlemek için)
+            let filteredInventory = inventory.filter(invItem => !myOffers.some(offered => offered.id === invItem.id));
+
+            if(filteredInventory.length === 0) {
+                grid.innerHTML = '<div style="color:#444; text-align:center; width:100%;">Masaya koyacak başka eşyanız yok.</div>';
+                return;
+            }
+
+            filteredInventory.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "inv-card";
+                card.onclick = () => {
+                    myOffers.push(item);
+                    myAccepted = false; peerAccepted = false;
+                    if(conn) conn.send({type: "OFFER", items: myOffers});
+                    closePanel('tradeItemSelectScreen');
+                    renderTradeTableStatus();
+                };
+                const nameDiv = document.createElement('div');
+                nameDiv.className = "item-name"; nameDiv.style.color = item.text; nameDiv.innerText = item.name;
+                const rateDiv = document.createElement('div');
+                rateDiv.className = "item-rate"; rateDiv.innerText = `1/${item.rate.toLocaleString()}`;
+                
+                card.appendChild(nameDiv); card.appendChild(rateDiv); grid.appendChild(card);
+            });
+        }
+
+        function removeMyOfferAt(index) {
+            myOffers.splice(index, 1);
+            myAccepted = false; peerAccepted = false;
+            if(conn) conn.send({type: "OFFER", items: myOffers});
+            renderTradeTableStatus();
+        }
+
+        function clickAcceptTrade() {
+            myAccepted = true;
+            renderTradeTableStatus();
+            if(conn) conn.send({type: "ACCEPT"});
+            checkTradeCompletion();
+        }
+
+        function checkTradeCompletion() {
+            if(myAccepted && peerAccepted) {
+                isTradeSuccess = true; // Bağlantı kapatma korumasını aç
+
+                // 1. Masaya koyduğum kendi eşyalarımı envanterimden çıkart
+                myOffers.forEach(offeredItem => {
+                    inventory = inventory.filter(i => i.id !== offeredItem.id);
+                    // Eğer kuşanılmış eşyayı elden çıkardıysak kuşanmayı iptal et
+                    if (equippedItemName === offeredItem.name) { equippedItemName = "Common"; localStorage.setItem('rng_equipped_item', "Common"); }
+                });
+
+                // 2. Karşı tarafın koyduğu eşyaları envanterime ekle
+                peerOffers.forEach(peerItem => {
+                    inventory.push({
+                        name: peerItem.name, rate: peerItem.rate, text: peerItem.text,
+                        id: "ITEM_" + Date.now() + "_" + Math.random()
+                    });
+                });
+                
+                localStorage.setItem('rng_game_inventory', JSON.stringify(inventory));
+                applyEquippedTheme(equippedItemName);
+                syncPlatformRngProfile();
+                isAutoRollUnlocked = checkKeyExist();
+                updateAutoRollButtonUI();
+                
+                alert("Takas Başarıyla Gerçekleşti! 🎉 Eşyalar değiş tokuş edildi.");
+                closeTradePanel();
+            }
+        }
+
+        function closeTradePanel() {
+            if(conn) { conn.close(); }
+            if(peer) { peer.destroy(); peer = null; }
+            document.getElementById('tradeTable').style.display = 'none';
+            document.getElementById('tradeSetup').style.display = 'flex';
+            document.getElementById('partnerCodeInput').value = "";
+            document.getElementById('tradeStatus').innerText = "Henüz bir masada değilsiniz. Kod üreterek veya arkadaşınızın kodunu girerek başlayın.";
+            closePanel('tradeScreen');
+        }
+        // ===============================================================
+
+        function applyEquippedTheme(themeName) {
+            const body = document.body; const rollBtn = document.getElementById('rollBtn');
+            const petStation = document.getElementById('petStation'); const bgEffect = document.getElementById('themeBgEffect');
+            const slotBox = document.getElementById('slotBox');
+            if(!body || !rollBtn || !petStation || !bgEffect || !slotBox) return;
+
+            body.className = ""; bgEffect.innerHTML = ""; petStation.innerHTML = "";
+            petStation.className = "pet-slot"; slotBox.style.borderColor = "#222";
+            rollBtn.style.background = "#f1c40f"; rollBtn.style.color = "#000"; rollBtn.style.boxShadow = "none";
+
+            switch(themeName) {
+                case "Common":
+                    body.style.backgroundColor = "#000000"; rollBtn.style.background = "#222222"; rollBtn.style.color = "#ffffff";
+                    petStation.innerText = "⚪"; petStation.classList.add('floating-pet');
+                    break;
+                case "Uncommon":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#2ecc71";
+                    rollBtn.style.background = "#2ecc71"; rollBtn.style.color = "#000000";
+                    petStation.innerText = "🟢"; petStation.classList.add('floating-pet');
+                    break;
+                case "Rare":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#3498db";
+                    rollBtn.style.background = "#3498db"; rollBtn.style.color = "#ffffff";
+                    petStation.innerText = "🔵"; petStation.classList.add('floating-pet');
+                    break;
+                case "Epic":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#9b59b6";
+                    rollBtn.style.background = "#9b59b6"; rollBtn.style.color = "#ffffff";
+                    petStation.innerText = "🟣"; petStation.classList.add('floating-pet');
+                    break;
+                case "Legendary":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#f1c40f";
+                    rollBtn.style.background = "#f1c40f"; rollBtn.style.color = "#000000";
+                    petStation.innerText = "✨"; petStation.classList.add('floating-pet');
+                    break;
+                case "Mythic":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#e74c3c";
+                    rollBtn.style.background = "#e74c3c"; rollBtn.style.color = "#ffffff";
+                    rollBtn.style.boxShadow = "0 0 15px rgba(231, 76, 60, 0.4)";
+                    petStation.innerText = "🔴"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Void":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#8e44ad";
+                    rollBtn.style.background = "#8e44ad"; rollBtn.style.color = "#ffffff";
+                    petStation.innerText = "🌀"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Cosmic":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#00ffff";
+                    rollBtn.style.background = "#00ffff"; rollBtn.style.color = "#000000";
+                    rollBtn.style.boxShadow = "0 0 15px rgba(0, 255, 255, 0.4)";
+                    petStation.innerText = "🌌"; petStation.classList.add('floating-pet');
+                    break;
+                case "Solar":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#e67e22";
+                    rollBtn.style.background = "#e67e22"; rollBtn.style.color = "#000000";
+                    bgEffect.innerHTML = '<div class="solar-sun"></div>';
+                    petStation.innerText = "☀️"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Lunar":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#5dade2";
+                    rollBtn.style.background = "#5dade2"; rollBtn.style.color = "#000000";
+                    bgEffect.innerHTML = '<div class="lunar-moon"></div>';
+                    petStation.innerText = "🌙"; petStation.classList.add('floating-pet');
+                    break;
+                case "Nebula":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#a569bd";
+                    rollBtn.style.background = "#a569bd"; rollBtn.style.color = "#ffffff";
+                    rollBtn.style.boxShadow = "0 0 15px rgba(165, 105, 189, 0.4)";
+                    petStation.innerText = "☁️"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Galaxy":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#2980b9";
+                    rollBtn.style.background = "#2980b9"; rollBtn.style.color = "#ffffff";
+                    rollBtn.style.boxShadow = "0 0 15px rgba(41, 128, 185, 0.4)";
+                    petStation.innerText = "⭐"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Supernova":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#e74c3c";
+                    rollBtn.style.background = "#e74c3c"; rollBtn.style.color = "#ffffff";
+                    rollBtn.style.boxShadow = "0 0 25px rgba(231, 76, 60, 0.6)";
+                    petStation.innerText = "💥"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Quasar":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#9b59b6";
+                    rollBtn.style.background = "#9b59b6"; rollBtn.style.color = "#ffffff";
+                    rollBtn.style.boxShadow = "0 0 20px rgba(155, 89, 182, 0.5)";
+                    petStation.innerText = "💫"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Black Hole":
+                    body.style.backgroundColor = "#000000"; rollBtn.style.background = "#553377"; rollBtn.style.color = "#ffffff";
+                    slotBox.style.borderColor = "#553377"; rollBtn.style.boxShadow = "0 0 15px rgba(85, 51, 119, 0.5)";
+                    petStation.innerText = "🕳️"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Angel":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#ffffff";
+                    rollBtn.style.background = "#ffffff"; rollBtn.style.color = "#000000";
+                    rollBtn.style.boxShadow = "0 0 20px rgba(255, 255, 255, 0.5)";
+                    petStation.innerText = "👁️🪽"; petStation.classList.add('floating-pet');
+                    break;
+                case "Demon":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#ff0000";
+                    rollBtn.style.background = "#ff0000"; rollBtn.style.color = "#ffffff";
+                    rollBtn.style.boxShadow = "0 0 20px rgba(255, 0, 0, 0.5)";
+                    bgEffect.innerHTML = '<div class="demon-horns"></div>';
+                    petStation.innerText = "🔱"; petStation.classList.add('floating-pet');
+                    break;
+                case "Divine":
+                    body.style.backgroundColor = "#000000"; rollBtn.style.background = "#eeeeee"; rollBtn.style.color = "#000000";
+                    rollBtn.style.boxShadow = "0 0 20px rgba(238, 238, 238, 0.6)"; slotBox.style.borderColor = "#ffffff";
+                    petStation.innerText = "⚡"; petStation.classList.add('floating-pet');
+                    break;
+                case "Eternal":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#f39c12";
+                    rollBtn.style.background = "#f39c12"; rollBtn.style.color = "#ffffff";
+                    rollBtn.style.boxShadow = "0 0 15px rgba(243, 156, 18, 0.5)";
+                    petStation.innerText = "⏳"; petStation.classList.add('floating-pet');
+                    break;
+                case "Infinity":
+                    body.classList.add('matrix-bg'); body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#00ff00";
+                    rollBtn.style.background = "#00ff00"; rollBtn.style.color = "#000000";
+                    rollBtn.style.boxShadow = "0 0 25px rgba(0, 255, 0, 0.6)";
+                    petStation.innerText = "📟"; petStation.classList.add('floating-pet');
+                    break;
+                case "Omega":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#ff3333";
+                    rollBtn.style.background = "#ff3333"; rollBtn.style.color = "#ffffff";
+                    rollBtn.style.boxShadow = "0 0 25px rgba(255, 51, 51, 0.6)";
+                    petStation.innerText = "⚠️"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Reality":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#bdc3c7";
+                    rollBtn.style.background = "#bdc3c7"; rollBtn.style.color = "#000000";
+                    rollBtn.style.boxShadow = "0 0 15px rgba(189, 195, 199, 0.4)";
+                    petStation.innerText = "🧩"; petStation.classList.add('floating-pet');
+                    break;
+                case "Dream":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#ffb6c1";
+                    rollBtn.style.background = "#ffb6c1"; rollBtn.style.color = "#000000";
+                    rollBtn.style.boxShadow = "0 0 15px rgba(255, 182, 193, 0.5)";
+                    petStation.innerText = "💭"; petStation.classList.add('floating-pet');
+                    break;
+                case "Void King":
+                    body.style.backgroundColor = "#000000"; slotBox.style.borderColor = "#4a0082";
+                    rollBtn.style.background = "#4a0082"; rollBtn.style.color = "#ffffff";
+                    rollBtn.style.boxShadow = "0 0 30px rgba(74, 0, 130, 0.7)";
+                    bgEffect.innerHTML = '<div class="toilet-slipper-aura">🩴</div>';
+                    petStation.innerText = "👑"; petStation.classList.add('floating-pet');
+                    break;
+                case "TRUE GOD":
+                    body.style.backgroundColor = "#000000";
+                    rollBtn.style.background = "linear-gradient(45deg, #ff0000, #00ff00, #0000ff)"; rollBtn.style.color = "#ffffff";
+                    rollBtn.style.boxShadow = "0 0 35px #ffffff"; slotBox.style.borderColor = "#ff00ff";
+                    petStation.innerText = "👁️‍🗨️"; petStation.classList.add('spinning-pet');
+                    break;
+                default:
+                    body.style.backgroundColor = "#000000"; rollBtn.style.background = "#f1c40f"; rollBtn.style.color = "#000000";
+                    petStation.innerText = "🔮"; petStation.classList.add('floating-pet');
+                    break;
+            }
+        }
+
+        function toggleAutoDeleteFilter(itemName) {
+            autoDeleteFilters[itemName] = !autoDeleteFilters[itemName];
+            localStorage.setItem('rng_auto_delete_filters', JSON.stringify(autoDeleteFilters));
+            renderAutoDeleteList();
+        }
+
+        function getRandomItem() {
+            let maxWeight = itemsPool[itemsPool.length - 1].rate;
+            let rand = Math.random() * maxWeight;
+            if (rollCount === 10) rand = rand / 2;
+            for (let i = itemsPool.length - 1; i >= 0; i--) {
+                if (rand <= maxWeight / itemsPool[i].rate) return itemsPool[i];
+            }
+            return itemsPool[0];
+        }
+
+        function toggleAutoRoll() {
+            if (!isAutoRolling) {
+                isAutoRolling = true; updateAutoRollButtonUI(); roll();
+            } else {
+                isAutoRolling = false; clearTimeout(currentSpinTimeout); updateAutoRollButtonUI();
+                if (!document.getElementById('slotText').classList.contains('spinning')) {
+                    document.getElementById('rollBtn').disabled = false;
+                }
+            }
+        }
+
+        function roll() {
+            const rollBtn = document.getElementById('rollBtn');
+            const slotText = document.getElementById('slotText');
+            const slotRate = document.getElementById('slotRate');
+
+            rollBtn.disabled = true; slotText.classList.add('spinning'); slotRate.innerText = "1/-";
+            let ticks = 0; const maxTicks = 12;
+            
+            const spinInterval = setInterval(() => {
+                const randomVisualItem = itemsPool[Math.floor(Math.random() * Math.min(itemsPool.length, 10))];
+                slotText.innerText = randomVisualItem.name; slotText.style.color = randomVisualItem.text;
+                ticks++;
+
+                if (ticks >= maxTicks) {
+                    clearInterval(spinInterval);
+                    const wonItem = getRandomItem();
+                    
+                    slotText.classList.remove('spinning'); slotText.innerText = wonItem.name;
+                    slotText.style.color = wonItem.text; slotRate.innerText = `1/${wonItem.rate.toLocaleString()}`;
+
+                    if (autoDeleteFilters[wonItem.name]) {
+                        slotRate.innerText += " (Auto Deleted)";
+                    } else {
+                        inventory.push({ name: wonItem.name, rate: wonItem.rate, text: wonItem.text, id: "ITEM_" + Date.now() + "_" + Math.random() });
+                        localStorage.setItem('rng_game_inventory', JSON.stringify(inventory));
+                        syncPlatformRngProfile();
+                    }
+
+                    rollCount = rollCount >= 10 ? 0 : rollCount + 1;
+                    document.getElementById('counter').innerText = `${rollCount}/10`;
+                    
+                    if (isAutoRolling) {
+                        currentSpinTimeout = setTimeout(() => { if (isAutoRolling) roll(); }, 600);
+                    } else { rollBtn.disabled = false; }
+                }
+            }, 70);
+        }
+
+        function renderInventory() {
+            const grid = document.getElementById('invGrid');
+            if(!grid) return; grid.innerHTML = "";
+            
+            if (inventory.length === 0) {
+                grid.innerHTML = '<div style="color:#444; width:100%; text-align:center; padding-top:40px;">Envanter boş.</div>';
+                return;
+            }
+
+            for (let i = inventory.length - 1; i >= 0; i--) {
+                const item = inventory[i]; const card = document.createElement('div');
+                let cardClass = "inv-card"; if (item.name === equippedItemName) cardClass += " equipped-item";
+                card.className = cardClass; card.onclick = function() { handleInventoryCardClick(item.id, item.name); };
+
+                const nameDiv = document.createElement('div');
+                nameDiv.className = "item-name"; nameDiv.style.color = item.text; nameDiv.innerText = item.name;
+                const rateDiv = document.createElement('div');
+                rateDiv.className = "item-rate"; rateDiv.innerText = `1/${item.rate.toLocaleString()}`;
+
+                card.appendChild(nameDiv); card.appendChild(rateDiv); grid.appendChild(card);
+            }
+        }
+
+        function renderAutoDeleteList() {
+            const container = document.getElementById('autoListGrid');
+            if(!container) return; container.innerHTML = "";
+            itemsPool.forEach(item => {
+                const row = document.createElement('div'); row.className = "auto-row"; row.onclick = () => toggleAutoDeleteFilter(item.name);
+                const info = document.createElement('div'); info.className = "auto-row-info";
+                const nameDiv = document.createElement('div'); nameDiv.className = "item-name"; nameDiv.style.color = item.text; nameDiv.innerText = item.name;
+                const rateDiv = document.createElement('div'); rateDiv.className = "item-rate"; rateDiv.innerText = `1/${item.rate.toLocaleString()}`;
+                info.appendChild(nameDiv); info.appendChild(rateDiv);
+
+                const checkbox = document.createElement('input'); checkbox.type = "checkbox"; checkbox.className = "auto-checkbox";
+                checkbox.checked = !!autoDeleteFilters[item.name];
+                checkbox.onclick = (e) => e.stopPropagation(); checkbox.onchange = () => toggleAutoDeleteFilter(item.name);
+
+                row.appendChild(info); row.appendChild(checkbox); container.appendChild(row);
+            });
+        }
+
+        window.addEventListener("message", (event) => {
+            const data = event.data || {};
+            if (data.type === "PLATFORM_REQUEST_STATS" || data.type === "PLATFORM_REQUEST_RNG_STATS") {
+                syncPlatformRngProfile();
+            }
+        });
+
+        window.addEventListener("beforeunload", syncPlatformRngProfile);
+
+    </script>
+</body>
+</html>
