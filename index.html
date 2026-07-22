@@ -1,0 +1,1116 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RNG - Ultimate 25 Tier Edition</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: #000000; 
+            color: #e2e4e9;
+            font-family: sans-serif;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            overflow: hidden;
+            box-sizing: border-box;
+            position: relative;
+            transition: background-color 0.4s ease;
+        }
+
+        #themeBgEffect {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            z-index: -2;
+            pointer-events: none;
+            overflow: hidden;
+        }
+
+        .top-bar {
+            width: 100%;
+            padding: 20px;
+            display: flex;
+            justify-content: flex-start;
+            gap: 10px;
+            box-sizing: border-box;
+            z-index: 10;
+        }
+
+        .inv-btn { padding: 10px 20px; font-size: 0.9rem; font-weight: bold; background: #e74c3c; border: none; color: #fff; border-radius: 4px; cursor: pointer; }
+        .auto-btn { padding: 10px 20px; font-size: 0.9rem; font-weight: bold; background: #34495e; border: none; color: #fff; border-radius: 4px; cursor: pointer; }
+        .trade-hub-btn { padding: 10px 20px; font-size: 0.9rem; font-weight: bold; background: #f1c40f; border: none; color: #000; border-radius: 4px; cursor: pointer; }
+        .promo-btn { padding: 10px 15px; font-size: 0.9rem; font-weight: bold; background: #8e44ad; border: none; color: #fff; border-radius: 4px; cursor: pointer; margin-left: auto; }
+
+        .center-container {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            margin-top: auto;
+            margin-bottom: auto;
+            z-index: 5;
+        }
+
+        .pet-slot {
+            width: 60px;
+            height: 60px;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.2rem;
+        }
+
+        .slot-box {
+            width: 260px;
+            height: 140px;
+            background: rgba(0, 0, 0, 0.9); 
+            border: 2px solid #222;
+            border-radius: 6px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 10px;
+            box-sizing: border-box;
+            transition: border-color 0.3s ease;
+        }
+
+        .slot-text { font-size: 1.8rem; font-weight: bold; text-align: center; }
+        .slot-rate { font-size: 0.85rem; color: #666; margin-top: 8px; }
+
+        .bottom-area {
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+            width: 100%;
+            z-index: 10;
+        }
+
+        .counter { font-size: 0.9rem; color: #444; letter-spacing: 1px; }
+        .btn-group { display: flex; gap: 10px; }
+
+        .roll-normal-btn { padding: 12px 30px; font-size: 1.1rem; font-weight: bold; background: #f1c40f; color: #000; border: none; border-radius: 4px; cursor: pointer; transition: all 0.3s ease; }
+        .autoroll-btn { padding: 12px 20px; font-size: 1.1rem; font-weight: bold; background: #2ecc71; color: #fff; border: none; border-radius: 4px; cursor: pointer; }
+        .autoroll-btn.locked { background: #222; color: #666; }
+        .autoroll-btn.active { background: #e74c3c; }
+        .roll-normal-btn:disabled, .autoroll-btn:disabled { background: #111; color: #444; cursor: not-allowed; opacity: 0.6; }
+
+        /* Paneller */
+        .full-screen-panel {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: #000000; 
+            z-index: 100;
+            display: none;
+            flex-direction: column;
+            box-sizing: border-box;
+        }
+
+        .panel-header { padding: 20px; border-bottom: 1px solid #111; display: flex; justify-content: space-between; align-items: center; }
+        .panel-title { font-size: 1.2rem; font-weight: bold; color: #fff; }
+        .close-btn { background: none; border: none; color: #888; font-size: 1.5rem; cursor: pointer; }
+
+        .inv-grid { flex: 1; padding: 20px; overflow-y: auto; display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 10px; align-content: start; }
+        
+        .inv-card {
+            background: #050505; 
+            border: 1px solid #222;
+            border-radius: 4px;
+            padding: 12px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            height: 75px;
+            box-sizing: border-box;
+            cursor: pointer;
+            position: relative;
+        }
+        .inv-card.equipped-item { border-color: #2ecc71 !important; background: #031408; }
+        .inv-card.equipped-item::before { content: "👑"; position: absolute; top: 2px; left: 5px; font-size: 0.75rem; }
+
+        .item-name { font-size: 0.95rem; font-weight: bold; margin-top: 5px; }
+        .item-rate { font-size: 0.75rem; color: #555; }
+
+        /* Pop-up Menüsü */
+        .action-popup {
+            position: fixed;
+            top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: #0a0a0a; border: 1px solid #333; padding: 20px;
+            border-radius: 6px; z-index: 150; display: none;
+            flex-direction: column; gap: 10px; width: 260px; box-sizing: border-box;
+        }
+        .popup-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 140; display: none; }
+        .popup-btn { padding: 12px; border: none; border-radius: 4px; font-weight: bold; cursor: pointer; text-align: center; font-size: 0.9rem; }
+        .popup-btn.equip { background: #2ecc71; color: #fff; }
+        .popup-btn.delete { background: #e74c3c; color: #fff; }
+        .popup-btn.cancel { background: #333; color: #fff; }
+
+        /* Yeni Takas Giriş Ekranı Tasarımı */
+        .trade-hub-container { padding: 30px; display: flex; flex-direction: column; gap: 25px; align-items: center; justify-content: center; height: 100%; box-sizing: border-box; }
+        .trade-hub-box { width: 100%; max-width: 400px; background: #050505; border: 1px solid #222; padding: 20px; border-radius: 6px; text-align: center; box-sizing: border-box; }
+        .trade-hub-text { font-size: 0.95rem; color: #aaa; margin-top: 15px; line-height: 1.4; font-weight: bold; }
+        
+        /* Gerçek Takas Masası */
+        .trade-container { display: flex; flex-direction: column; height: 100%; }
+        .trade-split-zone { flex: 1; display: flex; border-bottom: 1px solid #111; overflow: hidden; }
+        .trade-side { flex: 1; display: flex; flex-direction: column; padding: 15px; box-sizing: border-box; overflow-y: auto; }
+        .trade-side.left { border-right: 1px solid #111; background: #020202; }
+        .trade-side.right { background: #040404; }
+        .side-title { font-size: 0.9rem; font-weight: bold; color: #888; margin-bottom: 10px; text-transform: uppercase; display: flex; justify-content: space-between; align-items: center; }
+        .add-to-trade-btn { background: #2ecc71; color: #fff; border: none; padding: 4px 10px; font-size: 0.85rem; font-weight: bold; border-radius: 3px; cursor: pointer; }
+        .trade-box-list { display: flex; flex-direction: column; gap: 6px; }
+        .mini-trade-card { background: #000; border: 1px solid #151515; padding: 8px 12px; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; }
+        .remove-trade-item { color: #e74c3c; cursor: pointer; font-weight: bold; margin-left: 10px; }
+        
+        .trade-controls-zone { padding: 15px 20px; background: #050505; display: flex; flex-direction: column; gap: 12px; box-sizing: border-box; }
+        .action-btn { padding: 12px; border: none; border-radius: 4px; font-weight: bold; font-size: 0.95rem; cursor: pointer; text-align: center; }
+        .btn-gold { background: #f1c40f; color: #000; }
+        .btn-green { background: #2ecc71; color: #fff; }
+        .btn-green.ready-active { background: #e74c3c; }
+        .btn-blue { background: #3498db; color: #fff; width: 100%; max-width: 400px; }
+        .trade-input { background: #000; border: 1px solid #222; color: #fff; padding: 12px; border-radius: 4px; font-size: 0.9rem; width: 100%; box-sizing: border-box; text-align: center; }
+
+        .auto-list-container { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 12px; }
+        .auto-row { display: flex; justify-content: space-between; align-items: center; padding: 10px 15px; background: #050505; border: 1px solid #111; border-radius: 4px; cursor: pointer; }
+        .auto-row-info { display: flex; flex-direction: column; gap: 2px; }
+        .auto-checkbox { width: 18px; height: 18px; accent-color: #ff3333; cursor: pointer; }
+
+        /* Seçim Penceresi */
+        .selector-panel { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.95); z-index: 200; display: none; flex-direction: column; }
+
+        /* Gelişmiş Animasyon Efektleri */
+        .spinning { animation: slotBlur 0.06s infinite linear; }
+        @keyframes slotBlur {
+            0% { transform: translateY(-4px); opacity: 0.5; }
+            100% { transform: translateY(4px); opacity: 0.5; }
+        }
+
+        @keyframes petFloat {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-6px); }
+            100% { transform: translateY(0px); }
+        }
+        .floating-pet { animation: petFloat 2s infinite ease-in-out; }
+        @keyframes spinAround { 100% { transform: rotate(360deg); } }
+        .spinning-pet { animation: spinAround 4s infinite linear; }
+
+        .matrix-bg { background: linear-gradient(rgba(0, 0, 0, 0.92), rgba(0, 0, 0, 0.92)), url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="100" height="100"><text x="10" y="20" fill="%230f0" font-family="monospace" font-size="10">1010110</text><text x="50" y="60" fill="%230f0" font-family="monospace" font-size="12">0110</text></svg>'); background-size: 100px 100px; }
+        .solar-sun { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 240px; height: 240px; background: radial-gradient(circle, #f1c40f 0%, #e67e22 50%, transparent 70%); filter: blur(15px); opacity: 0.5; }
+        .lunar-moon { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 200px; height: 200px; background: radial-gradient(circle, #ffffff 0%, #bdc3c7 50%, transparent 70%); opacity: 0.35; }
+        .demon-horns { position: absolute; bottom: 0; width: 100%; height: 50%; background: linear-gradient(to top, rgba(231, 76, 60, 0.15), transparent); display: flex; justify-content: space-between; padding: 0 40px; box-sizing: border-box; }
+        .demon-horns::before, .demon-horns::after { content: "😈"; font-size: 7rem; opacity: 0.12; filter: blur(1px); }
+        .toilet-slipper-aura { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 10rem; opacity: 0.08; filter: blur(2px); animation: petFloat 3s infinite ease-in-out; }
+    </style>
+</head>
+<body>
+
+    <div id="themeBgEffect"></div>
+
+    <div class="top-bar">
+        <button class="inv-btn" onclick="openPanel('invScreen')">Inventory 🎒</button>
+        <button class="auto-btn" onclick="openPanel('autoScreen')">Auto Delete ⚙️</button>
+        <button class="trade-hub-btn" onclick="openPanel('tradeHubScreen')">Takas Odası 🤝</button>
+        <button class="promo-btn" onclick="openPanel('promoScreen')">Promo Kod 🎁</button>
+    </div>
+
+    <div class="center-container">
+        <div class="pet-slot" id="petStation"></div>
+        <div class="slot-box" id="slotBox">
+            <div class="slot-text" id="slotText" style="color: #555;">READY</div>
+            <div class="slot-rate" id="slotRate">1/-</div>
+        </div>
+    </div>
+
+    <div class="bottom-area">
+        <div class="counter" id="counter">0/10</div>
+        <div class="btn-group">
+            <button class="roll-normal-btn" id="rollBtn" onclick="roll()">ROLL</button>
+            <button class="autoroll-btn locked" id="autoRollBtn" onclick="handleAutoRollClick()">🔒 AUTO ROLL</button>
+        </div>
+    </div>
+
+    <div class="popup-overlay" id="popupOverlay" onclick="closeActionPopup()"></div>
+    <div class="action-popup" id="actionPopup">
+        <div style="text-align: center; font-weight: bold; font-size: 1.1rem; margin-bottom: 10px;" id="popupItemTitle">-</div>
+        <button class="popup-btn equip" id="popupEquipBtn">KUŞAN (EQUIP)</button>
+        <button class="popup-btn delete" id="popupDeleteBtn">SİL (DELETE)</button>
+        <button class="popup-btn cancel" onclick="closeActionPopup()">İPTAL</button>
+    </div>
+
+    <div class="full-screen-panel" id="invScreen">
+        <div class="panel-header">
+            <div class="panel-title">Inventory</div>
+            <button class="close-btn" onclick="closePanel('invScreen')">✕</button>
+        </div>
+        <div class="inv-grid" id="invGrid"></div>
+    </div>
+
+    <div class="full-screen-panel" id="tradeHubScreen">
+        <div class="panel-header">
+            <div class="panel-title">🤝 Takas Odası</div>
+            <button class="close-btn" onclick="closePanel('tradeHubScreen')">✕</button>
+        </div>
+        <div class="trade-hub-container">
+            <div class="trade-hub-box">
+                <button class="action-btn btn-gold" style="width:100%;" onclick="createTradeInviteCode()">Davet Kodu Oluştur 📋</button>
+                <div class="trade-hub-text" id="inviteCodeStatus"></div>
+            </div>
+
+            <div style="color: #444; font-weight: bold;">VEYA</div>
+
+            <div class="trade-hub-box" style="display:flex; flex-direction:column; gap:10px;">
+                <input type="text" class="trade-input" id="tradeJoinInput" placeholder="Kodu buraya kopyala/yapıştır">
+                <button class="action-btn btn-green" onclick="joinTradeByCode()">Davet İsteğini Kabul Et 🤝</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="full-screen-panel" id="tradeTableScreen">
+        <div class="panel-header">
+            <div class="panel-title">⚔️ Takas Masası</div>
+            <button class="close-btn" onclick="exitTradeTable()">✕</button>
+        </div>
+        <div class="trade-container">
+            <div class="trade-split-zone">
+                <div class="trade-side left">
+                    <div class="side-title">
+                        <span>Senin Masan</span>
+                        <button class="add-to-trade-btn" onclick="openTradeItemSelector()">+</button>
+                    </div>
+                    <div class="trade-box-list" id="myOfferList"></div>
+                </div>
+                <div class="trade-side right">
+                    <div class="side-title">Karşı Tarafın Masası</div>
+                    <div class="trade-box-list" id="theirOfferList"></div>
+                </div>
+            </div>
+            
+            <div class="trade-controls-zone">
+                <div style="text-align:center; font-size:0.8rem; color:#666;" id="tradeSyncNotice">Karşı tarafla eşleşmek için final kodunu kullanın.</div>
+                <div style="display:flex; gap:10px;">
+                    <button class="action-btn btn-gold" style="flex:1;" onclick="exportMyCurrentTable()">Masayı Kod Olarak Kopyala 📋</button>
+                    <button class="action-btn btn-blue" style="flex:1;" onclick="importTheirCurrentTable()">Karşı Masayı Güncelle 🔄</button>
+                </div>
+                <button class="action-btn btn-green" id="tradeReadyBtn" onclick="toggleTradeReady()">TAKASI ONAYLA VE TAMAMLA</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="selector-panel" id="tradeSelectorPanel">
+        <div class="panel-header">
+            <div class="panel-title">Masaya Eşya Ekle</div>
+            <button class="close-btn" onclick="closeSelectorPanel()">✕</button>
+        </div>
+        <div class="inv-grid" id="selectorGrid"></div>
+    </div>
+
+    <div class="full-screen-panel" id="promoScreen">
+        <div class="panel-header">
+            <div class="panel-title">🎁 Promo Kod Kullan</div>
+            <button class="close-btn" onclick="closePanel('promoScreen')">✕</button>
+        </div>
+        <div class="trade-hub-container">
+            <div class="trade-hub-box" style="display:flex; flex-direction:column; gap:12px; max-width:450px;">
+                <div style="font-size:0.85rem; color:#777; margin-bottom:5px;">Admin panelinden aldığınız hediye/etkinlik kodunu aşağıya yapıştırın.</div>
+                <input type="text" class="trade-input" id="promoInput" placeholder="PROMO-KOD-YAPIŞTIR">
+                <button class="action-btn btn-blue" onclick="claimPromoCode()">Kodu Kullan ve Eşyayı Al</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="full-screen-panel" id="autoScreen">
+        <div class="panel-header">
+            <div class="panel-title">Auto Delete Settings</div>
+            <button class="close-btn" onclick="closePanel('autoScreen')">✕</button>
+        </div>
+        <div class="auto-list-container" id="autoListGrid"></div>
+    </div>
+
+    <script>
+/* ===== HubLand hesaba özel kayıt katmanı ===== */
+(function(){
+  const GAME_PREFIXES=['rng_'];
+  const UID_SESSION_KEY='hubland_active_uid';
+  const MIGRATION_OWNER_KEY='hubland_legacy_owner_rng';
+  const rawGet=Storage.prototype.getItem;
+  const rawSet=Storage.prototype.setItem;
+  const rawRemove=Storage.prototype.removeItem;
+  const rawKey=Storage.prototype.key;
+  function activeUid(){ return sessionStorage.getItem(UID_SESSION_KEY)||''; }
+  function isGameKey(key){ return GAME_PREFIXES.some(p=>String(key).startsWith(p)); }
+  function scopedKey(key){
+    const uid=activeUid();
+    return uid&&isGameKey(key)?'__hubland_'+uid+'__'+key:String(key);
+  }
+  Storage.prototype.getItem=function(key){
+    if(this===localStorage) return rawGet.call(this,scopedKey(key));
+    return rawGet.call(this,key);
+  };
+  Storage.prototype.setItem=function(key,value){
+    if(this===localStorage) return rawSet.call(this,scopedKey(key),value);
+    return rawSet.call(this,key,value);
+  };
+  Storage.prototype.removeItem=function(key){
+    if(this===localStorage) return rawRemove.call(this,scopedKey(key));
+    return rawRemove.call(this,key);
+  };
+  function migrateLegacyTo(uid){
+    if(!uid)return;
+    const owner=rawGet.call(localStorage,MIGRATION_OWNER_KEY);
+    if(owner)return;
+    const keys=[];
+    for(let i=0;i<localStorage.length;i++){
+      const k=rawKey.call(localStorage,i);
+      if(k&&isGameKey(k)&&!k.startsWith('__hubland_'))keys.push(k);
+    }
+    for(const k of keys){
+      const value=rawGet.call(localStorage,k);
+      const target='__hubland_'+uid+'__'+k;
+      if(value!==null&&rawGet.call(localStorage,target)===null) rawSet.call(localStorage,target,value);
+    }
+    rawSet.call(localStorage,MIGRATION_OWNER_KEY,uid);
+  }
+  window.addEventListener('message',function(e){
+    const d=e.data||{};
+    if(d.type!=='HUBLAND_AUTH_CONTEXT')return;
+    const next=String(d.uid||'');
+    const current=activeUid();
+    if(next&&next!==current){
+      migrateLegacyTo(next);
+      sessionStorage.setItem(UID_SESSION_KEY,next);
+      location.reload();
+    }
+  });
+  try{if(window.parent&&window.parent!==window)window.parent.postMessage({type:'HUBLAND_REQUEST_AUTH_CONTEXT'},'*')}catch(_){}
+})();
+/* ===== /HubLand hesaba özel kayıt katmanı ===== */
+
+        const itemsPool = [
+            { name: "Common", rate: 2, text: "#888888" },
+            { name: "Uncommon", rate: 4, text: "#2ecc71" },
+            { name: "Rare", rate: 8, text: "#3498db" },
+            { name: "Epic", rate: 16, text: "#9b59b6" },
+            { name: "Legendary", rate: 32, text: "#f1c40f" },
+            { name: "Mythic", rate: 64, text: "#e74c3c" },
+            { name: "Void", rate: 128, text: "#8e44ad" },
+            { name: "Cosmic", rate: 256, text: "#00ffff" },
+            { name: "Solar", rate: 512, text: "#e67e22" },
+            { name: "Lunar", rate: 1024, text: "#5dade2" },
+            { name: "Nebula", rate: 2048, text: "#a569bd" },
+            { name: "Galaxy", rate: 4096, text: "#2980b9" },
+            { name: "Supernova", rate: 8192, text: "#e74c3c" },
+            { name: "Quasar", rate: 16384, text: "#9b59b6" },
+            { name: "Black Hole", rate: 32768, text: "#553377" },
+            { name: "Angel", rate: 65536, text: "#ffffff" },
+            { name: "Demon", rate: 131072, text: "#ff0000" },
+            { name: "Divine", rate: 262144, text: "#eeeeee" },
+            { name: "Eternal", rate: 524288, text: "#f39c12" },
+            { name: "Infinity", rate: 1048576, text: "#ffffff" },
+            { name: "Omega", rate: 2097152, text: "#ff3333" },
+            { name: "Reality", rate: 4194304, text: "#bdc3c7" },
+            { name: "Dream", rate: 8388608, text: "#ffb6c1" },
+            { name: "Void King", rate: 16777216, text: "#9b59b6" },
+            { name: "TRUE GOD", rate: 33554432, text: "#ff00ff" }
+        ];
+
+        let rollCount = 0;
+        let isAutoRolling = false;
+        let currentSpinTimeout = null;
+        
+        let inventory = JSON.parse(localStorage.getItem('rng_game_inventory')) || [];
+        let autoDeleteFilters = JSON.parse(localStorage.getItem('rng_auto_delete_filters')) || {};
+        let equippedItemName = localStorage.getItem('rng_equipped_item') || "Common";
+        let usedTradeIds = JSON.parse(localStorage.getItem('rng_used_trade_ids')) || [];
+        
+        // Yeni dinamik masaların verileri
+        let myTableItems = [];
+        let theirTableItems = [];
+        let amIReady = false;
+
+        let isAutoRollUnlocked = checkKeyExist();
+        
+        updateAutoRollButtonUI();
+                applyEquippedTheme(equippedItemName);
+
+        function checkKeyExist() { return inventory.some(item => item.name === "Key"); }
+
+        function updateAutoRollButtonUI() {
+            const autoBtn = document.getElementById('autoRollBtn');
+            if (isAutoRollUnlocked) {
+                autoBtn.classList.remove('locked');
+                autoBtn.innerText = isAutoRolling ? "STOP ROLL" : "AUTO ROLL";
+                if (isAutoRolling) autoBtn.classList.add('active'); else autoBtn.classList.remove('active');
+            } else {
+                autoBtn.classList.add('locked');
+                autoBtn.innerText = "🔒 AUTO ROLL";
+            }
+        }
+
+        function handleAutoRollClick() {
+            if (!isAutoRollUnlocked) {
+                const passwordAttempt = prompt("Auto Roll özelliğini açmak için gizli şifreyi girin:");
+                if (passwordAttempt === "İmAgay7812") {
+                    alert("Kilit Açıldı! Envanterinize metalik sarı bir 'Key' eklendi.");
+                    isAutoRollUnlocked = true;
+                    inventory.push({ name: "Key", rate: 2, text: "#d4af37", id: "KEY_" + Date.now() });
+                    localStorage.setItem('rng_game_inventory', JSON.stringify(inventory));
+                    updateAutoRollButtonUI();
+                } else if (passwordAttempt !== null) { alert("Yanlış Şifre!"); }
+            } else { toggleAutoRoll(); }
+        }
+
+        function openPanel(id) {
+            document.getElementById(id).style.display = 'flex';
+            if (id === 'invScreen') { renderInventory(); }
+            else if (id === 'autoScreen') { renderAutoDeleteList(); }
+        }
+
+        function closePanel(id) { document.getElementById(id).style.display = 'none'; }
+
+        function handleInventoryCardClick(id, name) {
+            document.getElementById('popupItemTitle').innerText = name;
+            const targetColor = (itemsPool.find(i => i.name === name) || {text:"#fff"}).text;
+            document.getElementById('popupItemTitle').style.color = targetColor;
+            
+            document.getElementById('popupEquipBtn').onclick = function() { executeEquip(name); };
+            document.getElementById('popupDeleteBtn').onclick = function() { executeDelete(id, name); };
+            
+            document.getElementById('actionPopup').style.display = 'flex';
+            document.getElementById('popupOverlay').style.display = 'block';
+        }
+
+        function closeActionPopup() {
+            document.getElementById('actionPopup').style.display = 'none';
+            document.getElementById('popupOverlay').style.display = 'none';
+        }
+
+        function executeEquip(name) {
+            equippedItemName = name;
+            localStorage.setItem('rng_equipped_item', name);
+            applyEquippedTheme(name);
+            renderInventory();
+            closeActionPopup();
+        }
+
+        function executeDelete(id, name) {
+            if (confirm(`"${name}" eşyasını silmek istiyor musunuz?`)) {
+                inventory = inventory.filter(item => item.id !== id);
+                localStorage.setItem('rng_game_inventory', JSON.stringify(inventory));
+                isAutoRollUnlocked = checkKeyExist();
+                updateAutoRollButtonUI();
+                renderInventory();
+                closeActionPopup();
+            }
+        }
+
+        function applyEquippedTheme(themeName) {
+            const body = document.body;
+            const rollBtn = document.getElementById('rollBtn');
+            const petStation = document.getElementById('petStation');
+            const bgEffect = document.getElementById('themeBgEffect');
+            const slotBox = document.getElementById('slotBox');
+
+            body.className = ""; 
+            bgEffect.innerHTML = "";
+            petStation.innerHTML = "";
+            petStation.className = "pet-slot";
+            slotBox.style.borderColor = "#222";
+            rollBtn.style.background = "#f1c40f";
+            rollBtn.style.color = "#000";
+            rollBtn.style.boxShadow = "none";
+
+            switch(themeName) {
+                case "Common":
+                    body.style.backgroundColor = "#0a0a0a";
+                    rollBtn.style.background = "#333"; rollBtn.style.color = "#fff";
+                    petStation.innerText = "⚪"; petStation.classList.add('floating-pet');
+                    break;
+                case "Uncommon":
+                    body.style.backgroundColor = "#020a04";
+                    slotBox.style.borderColor = "#2ecc71";
+                    rollBtn.style.background = "#2ecc71";
+                    petStation.innerText = "🟢"; petStation.classList.add('floating-pet');
+                    break;
+                case "Rare":
+                    body.style.backgroundColor = "#00020a";
+                    slotBox.style.borderColor = "#3498db";
+                    rollBtn.style.background = "#3498db"; rollBtn.style.color = "#fff";
+                    petStation.innerText = "🔵"; petStation.classList.add('floating-pet');
+                    break;
+                case "Epic":
+                    body.style.backgroundColor = "#05000a";
+                    slotBox.style.borderColor = "#9b59b6";
+                    rollBtn.style.background = "#9b59b6"; rollBtn.style.color = "#fff";
+                    petStation.innerText = "🟣"; petStation.classList.add('floating-pet');
+                    break;
+                case "Legendary":
+                    body.style.backgroundColor = "#0a0800";
+                    slotBox.style.borderColor = "#f1c40f";
+                    rollBtn.style.background = "#f1c40f";
+                    petStation.innerText = "✨"; petStation.classList.add('floating-pet');
+                    break;
+                case "Mythic":
+                    body.style.backgroundColor = "#0f0101";
+                    slotBox.style.borderColor = "#e74c3c";
+                    rollBtn.style.background = "#e74c3c"; rollBtn.style.color = "#fff";
+                    rollBtn.style.boxShadow = "0 0 10px #e74c3c";
+                    petStation.innerText = "🔴"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Void":
+                    body.style.backgroundColor = "#030008";
+                    rollBtn.style.background = "#8e44ad"; rollBtn.style.color = "#fff";
+                    petStation.innerText = "🌀"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Cosmic":
+                    body.style.backgroundColor = "#00040f";
+                    rollBtn.style.background = "#00ffff"; rollBtn.style.color = "#000";
+                    rollBtn.style.boxShadow = "0 0 12px #00ffff";
+                    petStation.innerText = "🌌"; petStation.classList.add('floating-pet');
+                    break;
+                case "Solar":
+                    body.style.backgroundColor = "#0a0400";
+                    rollBtn.style.background = "#e67e22";
+                    bgEffect.innerHTML = '<div class="solar-sun"></div>';
+                    petStation.innerText = "☀️"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Lunar":
+                    body.style.backgroundColor = "#02050a";
+                    rollBtn.style.background = "#5dade2";
+                    bgEffect.innerHTML = '<div class="lunar-moon"></div>';
+                    petStation.innerText = "🌙"; petStation.classList.add('floating-pet');
+                    break;
+                case "Nebula":
+                    body.style.backgroundColor = "#06010a";
+                    rollBtn.style.background = "#a569bd"; rollBtn.style.color = "#fff";
+                    rollBtn.style.boxShadow = "0 0 10px #a569bd";
+                    petStation.innerText = "☁️"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Galaxy":
+                    body.style.backgroundColor = "#000314";
+                    rollBtn.style.background = "#2980b9"; rollBtn.style.color = "#fff";
+                    rollBtn.style.boxShadow = "0 0 15px #2980b9";
+                    petStation.innerText = "⭐"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Supernova":
+                    body.style.backgroundColor = "#120000";
+                    rollBtn.style.background = "#e74c3c"; rollBtn.style.color = "#fff";
+                    rollBtn.style.boxShadow = "0 0 25px #e74c3c";
+                    petStation.innerText = "💥"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Quasar":
+                    body.style.backgroundColor = "#080014";
+                    rollBtn.style.background = "#9b59b6"; rollBtn.style.color = "#fff";
+                    rollBtn.style.boxShadow = "0 0 20px #9b59b6";
+                    petStation.innerText = "💫"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Black Hole":
+                    body.style.backgroundColor = "#010003";
+                    rollBtn.style.background = "#553377"; rollBtn.style.color = "#fff";
+                    slotBox.style.borderColor = "#553377";
+                    petStation.innerText = "🕳️"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Angel":
+                    body.style.backgroundColor = "#141414";
+                    rollBtn.style.background = "#eeeeee"; rollBtn.style.color = "#000";
+                    rollBtn.style.boxShadow = "0 0 15px #fff";
+                    petStation.innerText = "👁️🪽"; petStation.classList.add('floating-pet');
+                    break;
+                case "Demon":
+                    body.style.backgroundColor = "#080000";
+                    rollBtn.style.background = "#ff0000"; rollBtn.style.color = "#fff";
+                    bgEffect.innerHTML = '<div class="demon-horns"></div>';
+                    petStation.innerText = "🔱"; petStation.classList.add('floating-pet');
+                    break;
+                case "Divine":
+                    body.style.backgroundColor = "#0d0d0d";
+                    rollBtn.style.background = "#eeeeee"; rollBtn.style.color = "#000";
+                    rollBtn.style.boxShadow = "0 0 20px #eeeeee";
+                    slotBox.style.borderColor = "#fff";
+                    petStation.innerText = "⚡"; petStation.classList.add('floating-pet');
+                    break;
+                case "Eternal":
+                    body.style.backgroundColor = "#0f0a00";
+                    rollBtn.style.background = "#f39c12"; rollBtn.style.color = "#fff";
+                    rollBtn.style.boxShadow = "0 0 15px #f39c12";
+                    petStation.innerText = "⏳"; petStation.classList.add('floating-pet');
+                    break;
+                case "Infinity":
+                    body.classList.add('matrix-bg');
+                    rollBtn.style.background = "#00ff00"; rollBtn.style.color = "#000";
+                    rollBtn.style.boxShadow = "0 0 20px #00ff00";
+                    petStation.innerText = "📟"; petStation.classList.add('floating-pet');
+                    break;
+                case "Omega":
+                    body.style.backgroundColor = "#140000";
+                    rollBtn.style.background = "#ff3333"; rollBtn.style.color = "#fff";
+                    rollBtn.style.boxShadow = "0 0 25px #ff3333";
+                    petStation.innerText = "⚠️"; petStation.classList.add('spinning-pet');
+                    break;
+                case "Reality":
+                    body.style.backgroundColor = "#111111";
+                    rollBtn.style.background = "#bdc3c7"; rollBtn.style.color = "#000";
+                    rollBtn.style.boxShadow = "0 0 15px #bdc3c7";
+                    petStation.innerText = "🧩"; petStation.classList.add('floating-pet');
+                    break;
+                case "Dream":
+                    body.style.backgroundColor = "#12000a";
+                    rollBtn.style.background = "#ffb6c1"; rollBtn.style.color = "#000";
+                    rollBtn.style.boxShadow = "0 0 15px #ffb6c1";
+                    petStation.innerText = "💭"; petStation.classList.add('floating-pet');
+                    break;
+                case "Void King":
+                    body.style.backgroundColor = "#020005";
+                    rollBtn.style.background = "#4a0082"; rollBtn.style.color = "#fff";
+                    rollBtn.style.boxShadow = "0 0 30px #4a0082";
+                    bgEffect.innerHTML = '<div class="toilet-slipper-aura">🩴</div>';
+                    petStation.innerText = "👑"; petStation.classList.add('floating-pet');
+                    break;
+                case "TRUE GOD":
+                    body.style.backgroundColor = "#000";
+                    rollBtn.style.background = "linear-gradient(45deg, #ff0000, #00ff00, #0000ff)"; rollBtn.style.color = "#fff";
+                    rollBtn.style.boxShadow = "0 0 35px #fff";
+                    slotBox.style.borderColor = "#ff00ff";
+                    petStation.innerText = "👁️‍🗨️"; petStation.classList.add('spinning-pet');
+                    break;
+                default:
+                    body.style.backgroundColor = "#000";
+                    petStation.innerText = "🔮"; petStation.classList.add('floating-pet');
+                    break;
+            }
+        }
+
+        function toggleAutoDeleteFilter(itemName) {
+            autoDeleteFilters[itemName] = !autoDeleteFilters[itemName];
+            localStorage.setItem('rng_auto_delete_filters', JSON.stringify(autoDeleteFilters));
+            renderAutoDeleteList();
+        }
+
+        function getRandomItem() {
+            let maxWeight = itemsPool[itemsPool.length - 1].rate;
+            let rand = Math.random() * maxWeight;
+            if (rollCount === 10) rand = rand / 2;
+            for (let i = itemsPool.length - 1; i >= 0; i--) {
+                if (rand <= maxWeight / itemsPool[i].rate) return itemsPool[i];
+            }
+            return itemsPool[0];
+        }
+
+        function toggleAutoRoll() {
+            if (!isAutoRolling) {
+                isAutoRolling = true;
+                updateAutoRollButtonUI();
+                roll();
+            } else {
+                isAutoRolling = false;
+                clearTimeout(currentSpinTimeout);
+                updateAutoRollButtonUI();
+                if (!document.getElementById('slotText').classList.contains('spinning')) {
+                    document.getElementById('rollBtn').disabled = false;
+                }
+            }
+        }
+
+        function roll() {
+            const rollBtn = document.getElementById('rollBtn');
+            const slotText = document.getElementById('slotText');
+            const slotRate = document.getElementById('slotRate');
+
+            rollBtn.disabled = true;
+            slotText.classList.add('spinning');
+            slotRate.innerText = "1/-";
+
+            let ticks = 0;
+            const maxTicks = 12;
+            
+            const spinInterval = setInterval(() => {
+                const randomVisualItem = itemsPool[Math.floor(Math.random() * Math.min(itemsPool.length, 10))];
+                slotText.innerText = randomVisualItem.name;
+                slotText.style.color = randomVisualItem.text;
+                ticks++;
+
+                if (ticks >= maxTicks) {
+                    clearInterval(spinInterval);
+                    const wonItem = getRandomItem();
+                    updateHighestWon(wonItem);
+                    
+                    slotText.classList.remove('spinning');
+                    slotText.innerText = wonItem.name;
+                    slotText.style.color = wonItem.text;
+                    slotRate.innerText = `1/${wonItem.rate.toLocaleString()}`;
+
+                    if (autoDeleteFilters[wonItem.name]) {
+                        slotRate.innerText += " (Auto Deleted)";
+                    } else {
+                        inventory.push({ name: wonItem.name, rate: wonItem.rate, text: wonItem.text, id: "ITEM_" + Date.now() + "_" + Math.random() });
+                        localStorage.setItem('rng_game_inventory', JSON.stringify(inventory));
+                    }
+
+                    rollCount = rollCount >= 10 ? 0 : rollCount + 1;
+                    document.getElementById('counter').innerText = `${rollCount}/10`;
+                    
+                    if (isAutoRolling) {
+                        currentSpinTimeout = setTimeout(() => { if (isAutoRolling) roll(); }, 600);
+                    } else { rollBtn.disabled = false; }
+                }
+            }, 70);
+        }
+
+        function renderInventory() {
+            const grid = document.getElementById('invGrid');
+            grid.innerHTML = "";
+            if (inventory.length === 0) {
+                grid.innerHTML = '<div style="color:#444; width:100%; text-align:center; padding-top:40px;">Envanter boş.</div>';
+                return;
+            }
+            for (let i = inventory.length - 1; i >= 0; i--) {
+                const item = inventory[i];
+                const card = document.createElement('div');
+                card.className = "inv-card" + (item.name === equippedItemName ? " equipped-item" : "");
+                card.onclick = function() { handleInventoryCardClick(item.id, item.name); };
+                const nameDiv = document.createElement('div');
+                nameDiv.className = "item-name"; nameDiv.style.color = item.text; nameDiv.innerText = item.name;
+                const rateDiv = document.createElement('div');
+                rateDiv.className = "item-rate"; rateDiv.innerText = `1/${item.rate.toLocaleString()}`;
+                card.appendChild(nameDiv); card.appendChild(rateDiv); grid.appendChild(card);
+            }
+        }
+
+        function renderAutoDeleteList() {
+            const container = document.getElementById('autoListGrid');
+            container.innerHTML = "";
+            itemsPool.forEach(item => {
+                const row = document.createElement('div'); row.className = "auto-row"; row.onclick = () => toggleAutoDeleteFilter(item.name);
+                const info = document.createElement('div'); info.className = "auto-row-info";
+                const nameDiv = document.createElement('div'); nameDiv.className = "item-name"; nameDiv.style.color = item.text; nameDiv.innerText = item.name;
+                const rateDiv = document.createElement('div'); rateDiv.className = "item-rate"; rateDiv.innerText = `1/${item.rate.toLocaleString()}`;
+                info.appendChild(nameDiv); info.appendChild(rateDiv);
+                const checkbox = document.createElement('input'); checkbox.type = "checkbox"; checkbox.className = "auto-checkbox";
+                checkbox.checked = !!autoDeleteFilters[item.name];
+                checkbox.onclick = (e) => e.stopPropagation(); checkbox.onchange = () => toggleAutoDeleteFilter(item.name);
+                row.appendChild(info); row.appendChild(checkbox); container.appendChild(row);
+            });
+        }
+
+        /* ---------------- YENİ GELİŞMİŞ TAKAS ALTYAPISI ---------------- */
+        
+        function createTradeInviteCode() {
+            const invitePayload = { type: "INVITE", session: "SESS_" + Date.now() + "_" + Math.floor(Math.random()*1000) };
+            const code = btoa(unescape(encodeURIComponent(JSON.stringify(invitePayload))));
+            
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(() => {
+                    showInviteStatus(code);
+                }).catch(() => { fallbackInvitePrompt(code); });
+            } else { fallbackInvitePrompt(code); }
+        }
+
+        function fallbackInvitePrompt(code) {
+            showInviteStatus(code);
+            prompt("Davet kodu oluşturuldu! Kopyalayın:", code);
+        }
+
+        function showInviteStatus(code) {
+            const statusBox = document.getElementById('inviteCodeStatus');
+            statusBox.innerHTML = `Kod Kopyalandı! 📋<br><span style="color:#2ecc71; font-size:0.85rem; word-break:break-all;">${code}</span><br><br><span style="color:#f1c40f;">Bu kodu arkadaşına gönder, arkadaşın isteği kabul etsin ve takas masasına git!</span>`;
+            
+            setTimeout(() => {
+                if(confirm("Davet kodun hazır! Takas masasına ilerlemek istiyor musun?")) {
+                    openTradeTableDirectly();
+                }
+            }, 500);
+        }
+
+        function joinTradeByCode() {
+            const code = document.getElementById('tradeJoinInput').value.trim();
+            if(!code) { alert("Lütfen geçerli bir kod girin!"); return; }
+
+            try {
+                const decoded = JSON.parse(decodeURIComponent(escape(atob(code))));
+                if (decoded.type === "INVITE") {
+                    if (confirm("Takasa katılmak istediğinize emin misiniz?")) {
+                        openTradeTableDirectly();
+                    }
+                } else { alert("Bu bir davet kodu değil!"); }
+            } catch(e) { alert("Geçersiz veya bozuk kod!"); }
+        }
+
+        function openTradeTableDirectly() {
+            myTableItems = [];
+            theirTableItems = [];
+            amIReady = false;
+            document.getElementById('tradeReadyBtn').className = "action-btn btn-green";
+            document.getElementById('tradeReadyBtn').innerText = "TAKASI ONAYLA VE TAMAMLA";
+            
+            closePanel('tradeHubScreen');
+            openPanel('tradeTableScreen');
+            renderTradeTableSides();
+        }
+
+        function renderTradeTableSides() {
+            const myContainer = document.getElementById('myOfferList');
+            myContainer.innerHTML = "";
+            myTableItems.forEach((item, index) => {
+                const row = document.createElement('div');
+                row.className = "mini-trade-card";
+                row.innerHTML = `<span style="color:${item.text}; font-weight:bold;">${item.name}</span> <span>1/${item.rate.toLocaleString()} <span class="remove-trade-item" onclick="removeMyTableItem(${index})">✕</span></span>`;
+                myContainer.appendChild(row);
+            });
+            if(myTableItems.length === 0) myContainer.innerHTML = `<div style="color:#444; font-size:0.8rem; text-align:center; padding-top:15px;">Masanız boş. (+) butonuyla ekleyin.</div>`;
+
+            const theirContainer = document.getElementById('theirOfferList');
+            theirContainer.innerHTML = "";
+            theirTableItems.forEach(item => {
+                const row = document.createElement('div');
+                row.className = "mini-trade-card";
+                row.innerHTML = `<span style="color:${item.text}; font-weight:bold;">${item.name}</span> <span>1/${item.rate.toLocaleString()}</span>`;
+                theirContainer.appendChild(row);
+            });
+            if(theirTableItems.length === 0) theirContainer.innerHTML = `<div style="color:#444; font-size:0.8rem; text-align:center; padding-top:15px;">Karşı taraf veri göndermedi.</div>`;
+        }
+
+        function openTradeItemSelector() {
+            document.getElementById('tradeSelectorPanel').style.display = 'flex';
+            const grid = document.getElementById('selectorGrid');
+            grid.innerHTML = "";
+
+            let availableItems = [...inventory];
+            myTableItems.forEach(tItem => {
+                const idx = availableItems.findIndex(aItem => aItem.id === tItem.id);
+                if(idx !== -1) availableItems.splice(idx, 1);
+            });
+
+            if (availableItems.length === 0) {
+                grid.innerHTML = '<div style="color:#444; width:100%; text-align:center; padding-top:40px;">Masaya eklenebilecek eşya yok.</div>';
+                return;
+            }
+
+            availableItems.forEach(item => {
+                const card = document.createElement('div');
+                card.className = "inv-card";
+                card.onclick = function() {
+                    myTableItems.push(item);
+                    closeSelectorPanel();
+                    renderTradeTableSides();
+                };
+                const nameDiv = document.createElement('div');
+                nameDiv.className = "item-name"; nameDiv.style.color = item.text; nameDiv.innerText = item.name;
+                const rateDiv = document.createElement('div');
+                rateDiv.className = "item-rate"; rateDiv.innerText = `1/${item.rate.toLocaleString()}`;
+                card.appendChild(nameDiv); card.appendChild(rateDiv); grid.appendChild(card);
+            });
+        }
+
+        function closeSelectorPanel() { document.getElementById('tradeSelectorPanel').style.display = 'none'; }
+        function removeMyTableItem(index) {
+            myTableItems.splice(index, 1);
+            renderTradeTableSides();
+        }
+
+        function exportMyCurrentTable() {
+            if(myTableItems.length === 0 && theirTableItems.length === 0) { alert("Masada işlem yok!"); return; }
+            const payload = {
+                type: "SYNC_TABLE",
+                items: myTableItems,
+                ready: amIReady
+            };
+            const code = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(code).then(() => { alert("Masa verisi panoya kopyalandı! 📋 Arkadaşınıza yapıştırın."); });
+            } else { prompt("Kodu manuel kopyalayın:", code); }
+        }
+
+        function importTheirCurrentTable() {
+            const input = prompt("Arkadaşınızın 'Masayı Kod Olarak Kopyala' deyip size attığı kodu buraya yapıştırın:");
+            if(!input) return;
+            try {
+                const decoded = JSON.parse(decodeURIComponent(escape(atob(input.trim()))));
+                if(decoded.type === "SYNC_TABLE") {
+                    theirTableItems = decoded.items;
+                    renderTradeTableSides();
+                    document.getElementById('tradeSyncNotice').innerText = decoded.ready ? "Karşı taraf onay verdi! Sizin de onaylamanız bekleniyor." : "Masalar eşitlendi.";
+                    if(decoded.ready && amIReady) {
+                        finalizeDynamicTrade();
+                    }
+                } else { alert("Geçersiz masa verisi kodu!"); }
+            } catch(e) { alert("Kod çözülemedi!"); }
+        }
+
+        function toggleTradeReady() {
+            if(myTableItems.length === 0 && theirTableItems.length === 0) { alert("Boş masayı onaylayamazsınız!"); return; }
+            amIReady = !amIReady;
+            const btn = document.getElementById('tradeReadyBtn');
+            if(amIReady) {
+                btn.className = "action-btn btn-green ready-active";
+                btn.innerText = "ONAY GERİ ÇEK ⚠️";
+                alert("Siz masayı onayladınız! Şimdi 'Masayı Kod Olarak Kopyala' basıp arkadaşınıza atın. İki taraf da onaylarsa takas bitecek.");
+            } else {
+                btn.className = "action-btn btn-green";
+                btn.innerText = "TAKASI ONAYLA VE TAMAMLA";
+            }
+        }
+
+        function finalizeDynamicTrade() {
+            if(!confirm("İki taraf da onay verdi! Takas tamamlansın mı?")) return;
+
+            myTableItems.forEach(tItem => {
+                inventory = inventory.filter(invItem => invItem.id !== tItem.id);
+            });
+
+            theirTableItems.forEach(tItem => {
+                inventory.push({
+                    name: tItem.name,
+                    rate: tItem.rate,
+                    text: tItem.text,
+                    id: "ITEM_" + Date.now() + "_" + Math.random()
+                });
+            });
+
+            localStorage.setItem('rng_game_inventory', JSON.stringify(inventory));
+            isAutoRollUnlocked = checkKeyExist();
+            updateAutoRollButtonUI();
+            
+            alert("🎉 Takas Başarıyla Tamamlandı! Envanteriniz güncellendi.");
+            exitTradeTable();
+        }
+
+        function exitTradeTable() {
+            myTableItems = [];
+            theirTableItems = [];
+            amIReady = false;
+            closePanel('tradeTableScreen');
+        }
+
+        /* ---------------- PROMO KOD SİSTEMİ ---------------- */
+        function claimPromoCode() {
+            const code = document.getElementById('promoInput').value.trim();
+            if (!code) { alert("Lütfen bir kod girin!"); return; }
+
+            try {
+                const decodedString = decodeURIComponent(escape(atob(code)));
+                const payload = JSON.parse(decodedString);
+
+                if (usedTradeIds.includes(payload.packId) || usedTradeIds.includes(payload.id)) {
+                    alert("BU PROMO KOD DAHA ÖNCE KULLANILMIŞ VEYA İMHA EDİLMİŞ! 🛑");
+                    return;
+                }
+
+                let itemsToAdd = [];
+                let uniqueId = payload.packId || payload.id || ("PROMO_" + Date.now());
+
+                if (payload.items && Array.isArray(payload.items)) {
+                    itemsToAdd = payload.items;
+                } else if (payload.name) {
+                    itemsToAdd = [payload];
+                }
+
+                if (itemsToAdd.length === 0) {
+                    alert("Kodun içinde ödül bulunamadı!");
+                    return;
+                }
+
+                itemsToAdd.forEach(item => {
+                    inventory.push({
+                        name: item.name,
+                        rate: item.rate,
+                        text: item.text,
+                        id: "ITEM_" + Date.now() + "_" + Math.random()
+                    });
+                });
+
+                usedTradeIds.push(uniqueId);
+                localStorage.setItem('rng_used_trade_ids', JSON.stringify(usedTradeIds));
+                localStorage.setItem('rng_game_inventory', JSON.stringify(inventory));
+
+                isAutoRollUnlocked = checkKeyExist();
+                updateAutoRollButtonUI();
+
+                alert(`🎁 Tebrikler! Promo kod başarıyla kullanıldı ve envanterinize eklendi!`);
+                document.getElementById('promoInput').value = "";
+                closePanel('promoScreen');
+
+            } catch (e) {
+                alert("Geçersiz veya uyumsuz Promo Kod!");
+            }
+        }
+    
+
+        // ===== Platform: Reborn profil senkronizasyonu =====
+        const PLATFORM_REBORN_MESSAGE = 'PLATFORM_REBORN_GAME_STATS';
+        const RNG_HIGHEST_KEY = 'rng_highest_item_ever';
+        let lastPlatformStatsJSON = '';
+
+        function updateHighestWon(item) {
+            if (!item || !item.name) return;
+            try {
+                const old = JSON.parse(localStorage.getItem(RNG_HIGHEST_KEY) || 'null');
+                if (!old || Number(item.rate || 0) > Number(old.rate || 0)) {
+                    localStorage.setItem(RNG_HIGHEST_KEY, JSON.stringify({
+                        name: item.name,
+                        rate: Number(item.rate || 0),
+                        text: item.text || '#ffffff'
+                    }));
+                }
+            } catch (_) {}
+        }
+
+        function getHighestRngItemEver() {
+            let highest = null;
+            try { highest = JSON.parse(localStorage.getItem(RNG_HIGHEST_KEY) || 'null'); } catch (_) {}
+            for (const item of inventory) {
+                if (!highest || Number(item.rate || 0) > Number(highest.rate || 0)) {
+                    highest = { name:item.name, rate:Number(item.rate || 0), text:item.text || '#ffffff' };
+                }
+            }
+            if (highest) {
+                try { localStorage.setItem(RNG_HIGHEST_KEY, JSON.stringify(highest)); } catch (_) {}
+            }
+            return highest;
+        }
+
+        function buildRngPlatformStats() {
+            const equippedDef = itemsPool.find(i => i.name === equippedItemName) || {name:equippedItemName, rate:0, text:'#7c5cff'};
+            const counts = {};
+            for (const item of inventory) {
+                const key = item.name || 'Bilinmeyen';
+                counts[key] = (counts[key] || 0) + 1;
+            }
+            const inventorySummary = Object.keys(counts).map(name => {
+                const def = itemsPool.find(i => i.name === name) || inventory.find(i => i.name === name) || {};
+                return { name, count:counts[name], rate:Number(def.rate || 0), text:def.text || '#ffffff' };
+            }).sort((a,b) => b.rate-a.rate || a.name.localeCompare(b.name));
+            return {
+                selectedItem:{name:equippedDef.name, rate:Number(equippedDef.rate || 0), text:equippedDef.text || '#7c5cff'},
+                inventory:inventorySummary,
+                inventoryTotal:inventory.length,
+                highestItem:getHighestRngItemEver(),
+                updatedAt:Date.now()
+            };
+        }
+
+        function syncRngStatsToPlatform(force=false) {
+            const stats = buildRngPlatformStats();
+            const json = JSON.stringify(stats);
+            if (!force && json === lastPlatformStatsJSON) return;
+            lastPlatformStatsJSON = json;
+            const message = {type:PLATFORM_REBORN_MESSAGE, game:'rng', version:1, stats};
+            try { if (window.parent && window.parent !== window) window.parent.postMessage(message, '*'); } catch (_) {}
+            try { if (window.opener && !window.opener.closed) window.opener.postMessage(message, '*'); } catch (_) {}
+        }
+
+        setInterval(() => syncRngStatsToPlatform(false), 2500);
+        document.addEventListener('visibilitychange', () => { if (document.visibilityState === 'hidden') syncRngStatsToPlatform(true); });
+        window.addEventListener('pagehide', () => syncRngStatsToPlatform(true));
+        window.addEventListener('message', e => {
+            if (e.data && e.data.type === 'PLATFORM_REBORN_REQUEST_STATS') syncRngStatsToPlatform(true);
+        });
+        setTimeout(() => syncRngStatsToPlatform(true), 500);
+
+</script>
+</body>
+</html>
